@@ -136,7 +136,7 @@ Server keeps in‑memory maps: `connections[path]`, `messages[path]`, `timeOnlin
 Protected routes use HOC `withAuth` (wraps `HomeComponent`). Token stored in `localStorage`.
 
 ### Auth Context
-`AuthContext.jsx` centralizes API calls with Axios instance `baseURL: {server}/api/v1/users`.
+`AuthContext.jsx` centralizes API calls with Axios instance `baseURL: {API_BASE}/api/v1/users` (see `environment.js`).
 Exports functions:
 - `handleRegister(name, username, password)`
 - `handleLogin(username, password)` (stores token, navigates `/home`)
@@ -180,21 +180,69 @@ Implemented consistent dark + orange palette:
 
 ---
 ## Environment Configuration
-Frontend: `src/environment.js` toggles `IS_PROD`; server URL constants.
-Backend: MongoDB URI hardcoded (should move to `.env`).
 
-Recommended `.env` examples:
+### Frontend Endpoint Resolution (`src/environment.js`)
+The frontend no longer relies on a single hard‑coded boolean flip. Instead, it derives the correct backend base URL at runtime using layered fallbacks:
+
+Priority order:
+1. `window.__FORCE_ENV__ = 'prod' | 'dev'` (explicit override injected in `index.html` or via a script tag)
+2. Build / runtime environment variables (`REACT_APP_API_BASE` or `VITE_API_BASE`)
+3. Heuristic: if hostname contains `onrender.com` OR `NODE_ENV === 'production'` → production URL
+4. Fallback to development URL
+
+Exports:
+```js
+import { API_BASE, SOCKET_BASE } from './environment';
+```
+Both currently point to the same origin (REST + Socket.IO). If you ever split signalling to another host, adjust `SOCKET_BASE` only.
+
+Current mappings:
+```js
+SERVERS.dev  = 'http://localhost:3000'   // change if backend runs on 8000
+SERVERS.prod = 'https://panelly-4mo5.onrender.com'
+```
+Legacy default export (previously imported as `server`) still works, but prefer named `API_BASE`.
+
+To force a specific environment in a static production build (for example testing staging):
+```html
+<script>
+  window.__FORCE_ENV__ = 'dev'; // or 'prod'
+</script>
+```
+
+Or use a build‑time variable (CRA example):
+```
+REACT_APP_API_BASE=https://panelly-4mo5.onrender.com
+```
+
+> NOTE: `IS_PROD` remains in the file only for backward compatibility; the new logic ignores it. You may safely remove that variable once you confirm everything works.
+
+### Backend Environment
+Move secrets & ports into `.env` (not committed):
 ```
 # backend/.env.example
 PORT=8000
 MONGO_URI=mongodb+srv://<user>:<pass>@cluster/db
 CORS_ORIGIN=http://localhost:3000
 ```
+
+Update backend startup (`app.js`) to read: `process.env.PORT || 8000` and `process.env.MONGO_URI`.
+
+### Quick Consistency Checklist
+| Area | What to Verify |
+|------|----------------|
+| Frontend build | `API_BASE` resolves to production URL in deployed bundle |
+| Socket connect | `io.connect(SOCKET_BASE)` uses HTTPS in prod |
+| Auth requests  | Axios `baseURL` matches `API_BASE` |
+| CORS backend   | `CORS_ORIGIN` includes deployed frontend origin |
+| Local dev      | Change `SERVERS.dev` if backend runs on a different port |
+
+### Testing the Resolution
+Open DevTools console and run:
+```js
+import('*').then(()=>console.log('API_BASE:', window.__APP_API_BASE || 'see module export'))
 ```
-# frontend/.env.example
-REACT_APP_API_BASE=http://localhost:8000
-```
-Update backend to read `process.env.MONGO_URI` and `process.env.PORT` for production readiness.
+Or simply log `API_BASE` from a component to ensure expected value.
 
 ---
 ## Running Locally

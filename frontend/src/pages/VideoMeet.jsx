@@ -12,9 +12,9 @@ import StopScreenShareIcon from "@mui/icons-material/StopScreenShare";
 import ChatIcon from "@mui/icons-material/Chat";
 import CloseIcon from "@mui/icons-material/Close";
 import GroupsIcon from "@mui/icons-material/Groups";
-import server from "../environment";
+import { SOCKET_BASE } from "../environment";
 
-const server_url = server; // Base signalling / API server (see environment.js)
+const server_url = SOCKET_BASE; // Base signalling / API server (see environment.js)
 
 // Global (module‑scoped) map of socketId -> RTCPeerConnection
 // NOTE: Not stored in React state to avoid re-renders on each connection mutation.
