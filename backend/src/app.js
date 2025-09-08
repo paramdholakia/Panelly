@@ -21,6 +21,7 @@ import mongoose from "mongoose";               // ODM for MongoDB
 import { connectToSocket } from "./controllers/socketManager.js"; // Socket bootstrapper
 import cors from "cors";                       // Cross‑origin resource sharing
 import userRoutes from "./routes/users.routes.js"; // Auth & history endpoints
+import { env } from "node:process";
 
 // --- Core Instances ---------------------------------------------------------
 const app = express();
@@ -55,7 +56,7 @@ const start = async () => {
     app.set("mongo_user");
 
     // TODO: Replace with environment variable (process.env.MONGO_URI)
-    const MONGO_URI = "mongodb+srv://imdigitalashish:imdigitalashish@cluster0.cujabk4.mongodb.net/";
+    const MONGO_URI = env.MONGO_URI;
 
     try {
         const connectionDb = await mongoose.connect(MONGO_URI);
