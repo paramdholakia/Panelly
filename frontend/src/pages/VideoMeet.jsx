@@ -41,7 +41,6 @@ export default function VideoMeetComponent() {
   let [video, setVideo] = useState([]); // UI toggle for camera (inconsistent initial type: becomes boolean)
   let [audio, setAudio] = useState();
   let [screen, setScreen] = useState();
-  let [showModal, setModal] = useState(true);
   let [screenAvailable, setScreenAvailable] = useState();
   // ---------------------------------------------------------------------------
   // Chat State
@@ -56,6 +55,19 @@ export default function VideoMeetComponent() {
   let [username, setUsername] = useState("");
   const [showChat, setShowChat] = useState(true);
   let [videos, setVideos] = useState([]); // Remote participant streams (array of {socketId, stream,...})
+  // Responsive breakpoint state (mobile optimization for chat overlay)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 700;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 700);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // derived helpers (after videos declared)
   const participantCount = videos.length + 1; // Include local user (not stored in videos[])
 
@@ -78,7 +90,8 @@ export default function VideoMeetComponent() {
   // On mount: obtain user media permissions (camera/mic + screen capability)
   useEffect(() => {
     getPermissions();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount; getPermissions re-created but safe to ignore
 
   let getDislayMedia = () => {
     if (screen) {
@@ -149,6 +162,7 @@ export default function VideoMeetComponent() {
       getUserMedia();
       console.log("SET STATE HAS ", video, audio);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [video, audio]);
   let getMedia = () => {
     setVideo(videoAvailable);
@@ -495,6 +509,7 @@ export default function VideoMeetComponent() {
     if (screen !== undefined) {
       getDislayMedia();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
   // Toggle screen share flag
   let handleScreen = () => {
@@ -512,17 +527,14 @@ export default function VideoMeetComponent() {
 
   // Show chat panel & reset unread count
   let openChat = () => {
-    setModal(true);
     setShowChat(true);
     setNewMessages(0);
   };
   // Hide chat panel
   let closeChat = () => {
-    setModal(false);
     setShowChat(false);
   };
-  // Input handler (kept for potential validation)
-  let handleMessage = (e) => { setMessage(e.target.value); };
+  // (removed unused handleMessage; direct setMessage inline is used)
 
   /** Append chat message to local list & increment unread if remote sender */
   const addMessage = (data, sender, socketIdSender) => {
@@ -618,7 +630,7 @@ export default function VideoMeetComponent() {
           </AppBar>
 
           {showChat && (
-            <div className={styles.chatRoom}>
+            <div className={isMobile ? styles.chatRoomMobile : styles.chatRoom}>
               <div className={styles.chatHeader}>
                 <Typography variant="subtitle1">Chat</Typography>
                 <IconButton size="small" onClick={closeChat}>

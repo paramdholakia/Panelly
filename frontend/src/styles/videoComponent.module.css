@@ -151,6 +151,22 @@
     overflow: hidden;
 }
 
+/* Mobile full-screen chat overlay */
+.chatRoomMobile {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.98);
+    backdrop-filter: blur(18px);
+    border: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 100; /* above controls */
+    animation: chatSlideIn .35s ease;
+}
+
+@keyframes chatSlideIn { from { transform: translateY(20px); opacity:0;} to { transform: translateY(0); opacity:1;} }
+
 .chatHeader {
     padding: 10px 14px 8px;
     display: flex;
@@ -213,6 +229,7 @@
 }
 
 @media (max-width: 700px) {
+    /* hide desktop chat panel – mobile version uses overlay */
     .chatRoom { display:none; }
     .localPreviewWrapper { width:160px; }
     .videoTileLocal { width:160px; }
@@ -223,4 +240,9 @@
     .controlsBar { gap:4px; border-radius:32px; }
     .controlBtn svg { font-size: 1.4rem; }
     .localPreviewWrapper { bottom: 150px; left: 10px; }
+    .videoTileLocal { width:140px; }
+    .localPreviewWrapper { width:auto; }
+    .conferenceView { padding: 4px 6px 110px; gap:8px; }
+    .chatRoomMobile .chatMessages { padding: 12px 14px; }
+    .chatRoomMobile .chatInputRow { padding: 10px 10px 14px; }
 }
